@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>ULTIMATE LEGENDARIS v6.0 🔐👥</title>
+
+<style>
+body{
+  margin:0;
+  background:#0a0a0a;
+  color:white;
+  font-family:Arial;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+h1{margin:10px}
+
+#login,#menu{margin:20px}
+input{padding:8px;font-size:16px}
+button{padding:8px 15px;font-weight:bold;cursor:pointer}
+
+#gameArea{
+  width:760px;
+  height:520px;
+  position:relative;
+  overflow:hidden;
+  border:3px solid white;
+  background:linear-gradient(270deg,#ff0080,#7928ca,#2afadf);
+  background-size:600% 600%;
+  animation:bg 12s ease infinite;
+}
+@keyframes bg{
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+
+.box,.bomb{
+  width:45px;
+  height:45px;
+  position:absolute;
+  border-radius:10px;
+  cursor:pointer;
+}
+.box{background:#ff5252}
+.bomb{
+  background:black;
+  box-shadow:0 0 15px red;
+}
+.bomb::after{
+  content:'';
+  position:absolute;
+  bottom:-12px;
+  left:50%;
+  width:18px;
+  height:18px;
+  background:radial-gradient(circle,yellow,orange,red);
+  transform:translateX(-50%);
+  border-radius:50%;
+  animation:fire .4s infinite alternate;
+}
+@keyframes fire{
+  from{opacity:1;transform:translateX(-50%) scale(1)}
+  to{opacity:.4;transform:translateX(-50%) scale(1.6)}
+}
+
+#info{margin:10px;font-size:18px}
+</style>
+</head>
+
+<body>
+<h1>ULTIMATE LEGENDARIS v6.0 🔥</h1>
+
+<div id="login">
+  <input id="username" placeholder="Masukkan username">
+  <button onclick="login()">LOGIN</button>
+</div>
+
+<div id="menu" style="display:none">
+  <p>Halo, <span id="user"></span> 👋</p>
+  <button onclick="startSingle()">Single Player</button>
+  <button onclick="startMulti()">Multiplayer (2 Player)</button>
+</div>
+
+<div id="gameArea" style="display:none"></div>
+<div id="info"></div>
+
+<script>
+const loginDiv=document.getElementById("login");
+const menu=document.getElementById("menu");
+const userSpan=document.getElementById("user");
+const game=document.getElementById("gameArea");
+const info=document.getElementById("info");
+
+let user=localStorage.getItem("user");
+let mode="single";
+let score1=0,score2=0,time=30;
+let objs=[],timer,spawner;
+
+if(user) showMenu();
+
+function login(){
+  const u=document.getElementById("username").value;
+  if(!u) return alert("Isi username!");
+  localStorage.setItem("user",u);
+  user=u;
+  showMenu();
+}
+
+function showMenu(){
+  loginDiv.style.display="none";
+  menu.style.display="block";
+  userSpan.textContent=user;
+}
+
+function spawn(){
+  const isBomb=Math.random()<0.2;
+  const el=document.createElement("div");
+  el.className=isBomb?"bomb":"box";
+  game.appendChild(el);
+
+  const o={
+    el,
+    x:Math.random()*710,
+    y:Math.random()*470,
+    vx:(Math.random()*2-1)*2,
+    vy:(Math.random()*2-1)*2,
+    isBomb
+  };
+
+  el.onclick=(e)=>{
+    if(isBomb){
+      score1=Math.max(0,score1-3);
+      score2=Math.max(0,score2-3);
+    }else{
+      if(e.shiftKey) score2++;
+      else score1++;
+    }
+    el.remove();
+    objs=objs.filter(x=>x!==o);
+    updateInfo();
+  };
+
+  objs.push(o);
+}
+
+function animate(){
+  objs.forEach(o=>{
+    o.x+=o.vx;
+    o.y+=o.vy;
+    if(o.x<0||o.x>715) o.vx*=-1;
+    if(o.y<0||o.y>475) o.vy*=-1;
+    o.el.style.left=o.x+"px";
+    o.el.style.top=o.y+"px";
+  });
+  requestAnimationFrame(animate);
+}
+
+function startSingle(){
+  mode="single";
+  startGame();
+}
+function startMulti(){
+  mode="multi";
+  startGame();
+}
+
+function startGame(){
+  menu.style.display="none";
+  game.style.display="block";
+  score1=0;score2=0;time=30;
+  objs.forEach(o=>o.el.remove());
+  objs=[];
+  updateInfo();
+
+  timer=setInterval(()=>{
+    time--;
+    updateInfo();
+    if(time<=0) endGame();
+  },1000);
+
+  spawner=setInterval(spawn,700);
+}
+
+function updateInfo(){
+  if(mode==="single")
+    info.textContent=`${user} | Skor: ${score1} | Waktu: ${time}`;
+  else
+    info.textContent=`P1 🔴: ${score1} | P2 🟢: ${score2} | Waktu: ${time}`;
+}
+
+function endGame(){
+  clearInterval(timer);
+  clearInterval(spawner);
+  alert(
+    mode==="single"
+    ? `Game Over!\nSkor: ${score1}`
+    : `Game Over!\nP1: ${score1} vs P2: ${score2}`
+  );
+  location.reload();
+}
+
+animate();
+</script>
+</body>
+</html>
